@@ -238,6 +238,13 @@ func LoadSessionsFromDisk() error {
 
 			}
 
+			// Connect PWD daemon to the new network
+			if err := ConnectNetwork("pwd", s.Id); err != nil {
+				log.Println("ERROR NETWORKING")
+				return err
+			}
+			log.Printf("Connected pwd to network [%s]\n", s.Id)
+
 			// Schedule peridic tasks execution
 			s.SchedulePeriodicTasks()
 		}

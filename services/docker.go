@@ -46,6 +46,22 @@ func GetDaemonInfo(i *Instance) (types.Info, error) {
 	}
 	return i.dockerClient.Info(context.Background())
 }
+
+func GetSwarmPorts(i *Instance) ([]uint16, error) {
+	if i.dockerClient == nil {
+		return nil, fmt.Errorf("Docker client for DinD (%s) is not ready", i.IP)
+	}
+
+	tasks, err := i.dockerClient.TaskList(context.Background(), types.TaskListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range tasks {
+		log.Printf("%#v\n", len(t.Status.PortStatus.Ports))
+	}
+	return nil, nil
+}
+
 func GetUsedPorts(i *Instance) ([]uint16, error) {
 	if i.dockerClient == nil {
 		return nil, fmt.Errorf("Docker client for DinD (%s) is not ready", i.IP)
