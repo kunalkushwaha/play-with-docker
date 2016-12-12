@@ -52,13 +52,43 @@ func GetSwarmPorts(i *Instance) ([]uint16, error) {
 		return nil, fmt.Errorf("Docker client for DinD (%s) is not ready", i.IP)
 	}
 
+	hostnamesIdx := map[string]*Instance{}
+	for _, ins := range i.session.Instances {
+		hostnamesIdx[i.Hostname] = ins
+	}
+
+	nodesIdx := map[string]*Instance{}
+	nodes, nodesErr := i.dockerClient.NodeList(context.Background(), types.NodeListOptions{})
+	if nodesErr != nil {
+		return nil, nodesErr
+	}
+	for _, n := range nodes {
+		nodesIdx[n.ID] = hostnamesIdx[n.Description.Hostname]
+	}
+	log.Printf("%#v\n", nodesIdx)
+
 	tasks, err := i.dockerClient.TaskList(context.Background(), types.TaskListOptions{})
 	if err != nil {
 		return nil, err
 	}
+	services := map[string][]uint16{}
 	for _, t := range tasks {
-		log.Printf("%#v\n", len(t.Status.PortStatus.Ports))
+		services[t.ServiceID] = []uint16{}
 	}
+	for serviceID, _ := range services {
+		s, _, err := i.dockerClient.ServiceInspectWithRaw(context.Background(), serviceID)
+		if err != nil {
+			return nil, err
+		}
+		for _, p := range s.Endpoint.Ports {
+			services[serviceID] = append(services[serviceID], uint16(p.PublishedPort))
+		}
+	}
+	for _, t := range tasks {
+		ins := nodesIdx[t.NodeID]
+		ins.Ports = append(ins.Ports, services[t.ServiceID]...)
+	}
+
 	return nil, nil
 }
 

@@ -8,7 +8,6 @@ type checkSwarmUsedPortsTask struct {
 func (c checkSwarmUsedPortsTask) Run(i *Instance) {
 	if i.IsManager != nil && *i.IsManager {
 		// This is a swarm manager instance, then check for ports
-		log.Println("***********************")
 		if ports, err := GetSwarmPorts(i); err == nil {
 			log.Println(ports)
 		} else {

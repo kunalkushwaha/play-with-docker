@@ -123,7 +123,9 @@ func CloseSession(s *Session) error {
 	s.rw.Lock()
 	defer s.rw.Unlock()
 
-	s.ticker.Stop()
+	if s.ticker != nil {
+		s.ticker.Stop()
+	}
 	wsServer.BroadcastTo(s.Id, "session end")
 	log.Printf("Starting clean up of session [%s]\n", s.Id)
 	for _, i := range s.Instances {
